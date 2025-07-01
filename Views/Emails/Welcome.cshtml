@@ -1,0 +1,10 @@
+@model Roller.Models.Emails.WelcomeEmail
+
+<h2>Merhaba @Model.Name</h2>
+<p>@Model.Message</p>
+<ul>
+    @foreach (var feature in Model.Features)
+    {
+        <li>@feature</li>
+    }
+</ul>
