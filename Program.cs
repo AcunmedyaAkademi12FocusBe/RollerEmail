@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Mail;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Roller;
 using Roller.Data;
@@ -23,7 +24,7 @@ builder.Services.AddIdentityApiEndpoints<IdentityUser>(opt =>
         opt.Password.RequiredUniqueChars = 0;
         opt.Password.RequireDigit = false;
         opt.Password.RequiredUniqueChars = 0;
-        opt.SignIn.RequireConfirmedEmail = false;
+        opt.SignIn.RequireConfirmedEmail = true;
     })
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>();
@@ -38,12 +39,27 @@ builder.Services.AddOpenApi();
 var smtpSettings = builder.Configuration.GetSection("SmtpSettings").Get<SmtpSettings>();
 builder.Services
     .AddFluentEmail(smtpSettings.FromEmail, smtpSettings.FromName)
-    .AddRazorRenderer(Path.Combine(builder.Environment.ContentRootPath, "Views", "Emails"))
+    .AddRazorRenderer()
     .AddSmtpSender(new SmtpClient(smtpSettings.Host, smtpSettings.Port)
     {
         EnableSsl = true,
         Credentials = new NetworkCredential(smtpSettings.Username, smtpSettings.Password),
     });
+
+builder.Services.AddTransient<IEmailSender, EmailSender>();
+
+builder.Services.AddCors(opt =>
+{
+    opt.AddDefaultPolicy(policy =>
+    {
+        policy
+            //.WithOrigins("http://localhost:5173")
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            //.AllowCredentials()
+            .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
 
@@ -55,6 +71,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors();
 app.UseAuthorization();
 
 app.MapControllers();
