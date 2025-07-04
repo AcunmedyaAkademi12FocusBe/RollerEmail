@@ -13,12 +13,3 @@ public class Deneme
     public string? RecaptchaResponse { get; set; }
 }
 
-public class RecaptchaResponse
-{
-    [JsonPropertyName("success")]
-    public bool Success { get; set; }
-    [JsonPropertyName("hostname")]
-    public string Hostname { get; set; }
-    [JsonPropertyName("error-codes")]
-    public List<string> ErrorCodes { get; set; }
-}

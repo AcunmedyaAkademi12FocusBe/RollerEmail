@@ -61,6 +61,8 @@ builder.Services.AddCors(opt =>
     });
 });
 
+builder.Services.AddHttpClient<IRecaptchaValidator, RecaptchaValidator>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

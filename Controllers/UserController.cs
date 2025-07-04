@@ -17,7 +17,7 @@ namespace Roller.Controllers;
 [ApiController]
 [Route("[controller]")]
 [Authorize]
-public class UserController(IConfiguration configuration, IFluentEmail fluentEmail, AppDbContext context, UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager) : ControllerBase
+public class UserController(IRecaptchaValidator recaptchaValidator, IFluentEmail fluentEmail, AppDbContext context, UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager) : ControllerBase
 {
     [HttpGet("")]
     public IActionResult Index()
@@ -90,17 +90,18 @@ public class UserController(IConfiguration configuration, IFluentEmail fluentEma
     [AllowAnonymous]
     public async Task<IActionResult> Deneme(Deneme model)
     {
-        var parameters = new Dictionary<string, string?>()
+        // static method -> en alıştığımız kolay çözüm - eğer başka bir şey yapamıyorsak mükemmel - test edilebilirliği düşük-yok
+        // servis - DI -> alternatif en iyi yaklaşımlardan biri. kendi iş akışımız içinde istediğimiz sırada yapmamıza olanak sağlar
+        // data annotation -> dışa bağımlı olması işi bozuyor yoksa harika, statik test yazmak çok zor
+        // action filter -> bu mantıklı olur
+        // middleware -> dışa bağımlı dolayısıyla performansı kontrol edemiyorum
+
+        if (!await recaptchaValidator.IsValidAsync(model.RecaptchaResponse))
         {
-            {"secret", configuration.GetValue<string>("RecaptchaSecret")},
-            {"response", model.RecaptchaResponse},
-        };
-        var recaptchaReq = new FormUrlEncodedContent(parameters);
-        
-        var httpClient = new HttpClient();
-        var response = await httpClient.PostAsync("https://www.google.com/recaptcha/api/siteverify", recaptchaReq);
-        var responseContent = await response.Content.ReadAsStringAsync();
-        var recaptchaResponse = JsonSerializer.Deserialize<RecaptchaResponse>(responseContent);
-        return Ok(recaptchaResponse);
+            return Ok(new { Msg = "yoo dostum captchasız olmaz..." });
+        }
+
+        // var isCaptchaValid = await recaptchaValidator.IsValidAsync(model.RecaptchaResponse);
+        return Ok(new { Msg = "Hi"});
     }
 }
